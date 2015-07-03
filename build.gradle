@@ -1,0 +1,91 @@
+apply plugin: 'eclipse-wtp'
+apply plugin: 'idea'
+apply plugin: 'java'
+
+
+ext{
+versions = [
+		jdk:'1.8',
+		spring:'4.1.7.RELEASE',
+		hibernate:'4.3.8.Final',
+		springdatajpa:'1.7.2.RELEASE'
+	]
+}
+
+
+buildDir = 'build'
+
+//java version
+sourceCompatibility = versions.jdk
+targetCompatibility = versions.jdk
+//UTF-8
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+// repository
+repositories {
+   mavenCentral()
+}
+
+
+dependencies {
+   // java 
+   compile("org.springframework.data:spring-data-jpa:${versions.springdatajpa}")
+   compile("org.hibernate:hibernate-core:${versions.hibernate}")
+   compile("org.hibernate:hibernate-entitymanager:${versions.hibernate}")
+   compile("org.hibernate:hibernate-validator:5.1.3.Final")
+   
+   //db
+   compile("com.zaxxer:HikariCP:2.3.3")
+   compile("com.h2database:h2:1.4.186")
+   compile 'mysql:mysql-connector-java:5.1.34'
+ 
+
+    //test
+   testCompile("org.springframework:spring-test:${versions.spring}")
+   testCompile('junit:junit:4.11')
+   testCompile 'com.github.springtestdbunit:spring-test-dbunit:1.2.1'
+   testCompile ("org.dbunit:dbunit:2.5.0"){
+        exclude group: 'junit', module: 'junit'
+   }
+   
+   //logging
+  compile "org.slf4j:slf4j-api:1.6.1"
+	compile "org.slf4j:slf4j-log4j12:1.6.1"
+	compile "log4j:log4j:1.2.16"
+     
+}
+
+
+
+
+task initSrc << {
+    project.sourceSets*.allSource.srcDirTrees.flatten().dir.each { dir ->
+        dir.mkdirs()
+    }
+}
+
+
+
+
+/* Eclipse configuration */
+tasks.eclipse.dependsOn cleanEclipse
+tasks.eclipse.dependsOn initSrc
+
+eclipse {
+  classpath {
+    downloadSources = true
+    defaultOutputDir = file("${buildDir}/classes/main")
+
+     file {
+            whenMerged { classpath ->
+                def entries = classpath.entries
+                entries.findAll { it.kind == 'lib' }*.exported = false
+          }
+    }
+  }
+  
+}
+
+
+
+tasks.idea.dependsOn initSrc
